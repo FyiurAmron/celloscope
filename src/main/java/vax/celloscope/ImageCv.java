@@ -10,27 +10,6 @@ import org.opencv.imgproc.Imgproc;
  @author toor
  */
 public class ImageCv {
-    /**
-
-     */
-    public enum Interpolation {
-        Nearest( Imgproc.INTER_NEAREST ),
-        Linear( Imgproc.INTER_LINEAR ),
-        Cubic( Imgproc.INTER_CUBIC ),
-        Lanczos4( Imgproc.INTER_LANCZOS4 ),
-        Area( Imgproc.INTER_AREA ),;
-
-        private final int value;
-
-        private Interpolation ( int value ) {
-            this.value = value;
-        }
-
-        public int getValue () {
-            return value;
-        }
-    }
-
     final static public int MAX_8BIT_VALUE = 255;
 
     private Mat src;
@@ -40,8 +19,6 @@ public class ImageCv {
 
     private boolean autoswap = false;
     private Interpolation defaultInterpolation = Interpolation.Cubic;
-
-    private float lowThreshold = 0.01f, ratio = 3.0f;
 
     /**
      @param src initially not copied, referenced only
@@ -70,13 +47,35 @@ public class ImageCv {
     }
 
     public ImageCv ( String srcName ) {
-        this( imread( srcName, 1 ) );
-        cvtColor( src, src, COLOR_BGR2GRAY );
+        this( srcName, ImageReadType.UnchangedAny );
+    }
+
+    @Deprecated
+    public ImageCv ( String srcName, int flags ) {
+        this( imread( srcName, flags ) );
+    }
+
+    public ImageCv ( String srcName, ImageReadType imageReadType ) {
+        this( imread( srcName, imageReadType.toInt() ) );
+    }
+
+    public ImageCv convertColor ( ColorConversion colorConversion ) {
+        cvtColor( src, dst, colorConversion.toInt() );
+        return autoswap();
     }
 
     public ImageCv saveToFile ( String dstName ) {
         imwrite( dstName, src );
-        return autoswap();
+        return this;
+    }
+
+    /**
+     Note: equal to #getSrc()
+
+     @return src
+     */
+    public Mat getMat () {
+        return src;
     }
 
     public Mat getSrc () {
@@ -146,8 +145,15 @@ public class ImageCv {
         return Core.norm( src, m2 );
     }
 
-    public ImageCv rowsFrom ( int nr ) {
-        src = src.rowRange( nr, src.rows() );
+    public ImageCv rowRange ( int from, int to ) {
+        int rows = src.rows();
+        if ( from < 0 ) {
+            from += rows;
+        }
+        if ( to < 0 ) {
+            to += rows;
+        }
+        dst = src.rowRange( from, to );
         return autoswap();
     }
 
@@ -177,7 +183,7 @@ public class ImageCv {
         tmpSize.height = 0;
         tmpSize.width = 0;
         // a zero-set Size is needed to actually use x/y factors here
-        Imgproc.resize( src, dst, tmpSize, factorX, factorY, interpolation.getValue() );
+        Imgproc.resize( src, dst, tmpSize, factorX, factorY, interpolation.toInt() );
         return autoswap();
     }
 
@@ -186,12 +192,13 @@ public class ImageCv {
     }
 
     public ImageCv resize ( Size size, Interpolation interpolation ) {
-        Imgproc.resize( src, dst, size, 0, 0, interpolation.getValue() );
+        Imgproc.resize( src, dst, size, 0, 0, interpolation.toInt() );
         return autoswap();
     }
 
     public ImageCv multiply ( double scale ) {
         tmpScalar.val[0] = scale;
+
         Core.multiply( src, tmpScalar, dst );
         return autoswap();
     }
@@ -206,7 +213,7 @@ public class ImageCv {
     }
 
     public ImageCv threshold ( double threshold, ThresholdType thresholdType ) {
-        Imgproc.threshold( src, dst, threshold, MAX_8BIT_VALUE, thresholdType.getVal() );
+        Imgproc.threshold( src, dst, threshold, MAX_8BIT_VALUE, thresholdType.toInt() );
         return autoswap();
     }
 
@@ -243,6 +250,10 @@ public class ImageCv {
         return autoswap();
     }
 
+    // TODO
+    private float lowThreshold = 0.01f, ratio = 3.0f;
+    //
+
     public ImageCv applyDistanceTransform ( int blurStrength ) {
         applyGaussianBlur( blurStrength );
         Imgproc.threshold( dst, dst, 0, MAX_8BIT_VALUE, THRESH_OTSU );
@@ -274,6 +285,7 @@ public class ImageCv {
         return src.toString();
     }
 
+    // inner classes etc.
     public enum ThresholdType {
         Binary( THRESH_BINARY ),
         BinaryInv( THRESH_BINARY_INV ),
@@ -281,15 +293,73 @@ public class ImageCv {
         ToZero( THRESH_TOZERO ),
         ToZeroInv( THRESH_TOZERO_INV ),;
 
-        private final int val;
+        private final int value;
 
         private ThresholdType ( int val ) {
-            this.val = val;
+            this.value = val;
         }
 
-        public int getVal () {
-            return val;
+        public int toInt () {
+            return value;
         }
-
     }
+
+    /**
+
+     */
+    public enum Interpolation {
+        Nearest( Imgproc.INTER_NEAREST ),
+        Linear( Imgproc.INTER_LINEAR ),
+        Cubic( Imgproc.INTER_CUBIC ),
+        Lanczos4( Imgproc.INTER_LANCZOS4 ),
+        Area( Imgproc.INTER_AREA ), //
+        ;
+
+        private final int value;
+
+        private Interpolation ( int value ) {
+            this.value = value;
+        }
+
+        public int toInt () {
+            return value;
+        }
+    }
+
+    public enum ColorConversion {
+        BGR2GRAY( Imgproc.COLOR_BGR2GRAY ),
+        GRAY2BGR( Imgproc.COLOR_GRAY2BGR ), // TODO add the rest of them
+        ;
+
+        private final int value;
+
+        private ColorConversion ( int value ) {
+            this.value = value;
+        }
+
+        public int toInt () {
+            return value;
+        }
+    }
+
+    public enum ImageReadType {
+        UnchangedAny( CV_LOAD_IMAGE_ANYDEPTH | CV_LOAD_IMAGE_ANYCOLOR ),
+        GrayscaleAny( CV_LOAD_IMAGE_ANYDEPTH ),
+        ColorAny( CV_LOAD_IMAGE_ANYDEPTH | CV_LOAD_IMAGE_COLOR ),
+        Unchanged8( CV_LOAD_IMAGE_UNCHANGED ),
+        Grayscale8( CV_LOAD_IMAGE_GRAYSCALE ),
+        Color8( CV_LOAD_IMAGE_COLOR ), //
+        ;
+
+        private final int value;
+
+        private ImageReadType ( int value ) {
+            this.value = value;
+        }
+
+        public int toInt () {
+            return value;
+        }
+    }
+
 }
