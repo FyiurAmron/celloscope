@@ -196,10 +196,18 @@ public class ImageCv {
         return autoswap();
     }
 
-    public ImageCv multiply ( double scale ) {
-        tmpScalar.val[0] = scale;
+    public ImageCv multiplyElements ( ImageCv imageCv ) {
+        Core.multiply( src, imageCv.src, dst, 1.0 / MAX_8BIT_VALUE );
+        return autoswap();
+    }
 
-        Core.multiply( src, tmpScalar, dst );
+    public Scalar toScalar ( double value ) {
+        tmpScalar.val[0] = value;
+        return tmpScalar;
+    }
+
+    public ImageCv multiply ( double scale ) {
+        Core.multiply( src, toScalar( scale ), dst );
         return autoswap();
     }
 
@@ -214,6 +222,30 @@ public class ImageCv {
 
     public ImageCv threshold ( double threshold, ThresholdType thresholdType ) {
         Imgproc.threshold( src, dst, threshold, MAX_8BIT_VALUE, thresholdType.toInt() );
+        return autoswap();
+    }
+
+    public Scalar mean () {
+        return Core.mean( src );
+    }
+
+    public ImageCv add ( ImageCv imageCv ) {
+        Core.add( src, imageCv.src, dst );
+        return autoswap();
+    }
+
+    public ImageCv addToElements ( double value ) {
+        Core.add( src, toScalar( value ), dst );
+        return this;
+    }
+
+    public ImageCv invertColors () {
+        Core.bitwise_not( src, dst );
+        return autoswap();
+    }
+
+    public ImageCv normalize () {
+        Core.normalize( src, dst, 0, MAX_8BIT_VALUE, Core.NORM_MINMAX );
         return autoswap();
     }
 
@@ -250,35 +282,23 @@ public class ImageCv {
         return autoswap();
     }
 
-    // TODO
-    private float lowThreshold = 0.01f, ratio = 3.0f;
-    //
+    // TODO/TMP/FIXME
+    public static float lowThreshold = 0.01f, ratio = 3.0f;
 
     public ImageCv applyDistanceTransform ( int blurStrength ) {
         applyGaussianBlur( blurStrength );
-        Imgproc.threshold( dst, dst, 0, MAX_8BIT_VALUE, THRESH_OTSU );
+        Imgproc.threshold( src, dst, 0, MAX_8BIT_VALUE, THRESH_OTSU );
         Canny( dst, dst, lowThreshold, lowThreshold * ratio, 3, true );
         Core.bitwise_not( dst, dst );
 
         distanceTransform( dst, dst, CV_DIST_L2, CV_DIST_MASK_PRECISE );
-        Core.normalize( dst, dst, 0, 255, Core.NORM_MINMAX );
+        Core.normalize( dst, dst, 0, MAX_8BIT_VALUE, Core.NORM_MINMAX );
         //System.out.println( dst.depth() );
         dst.convertTo( dst, CvType.CV_8UC1 );
 
         return autoswap();
     }
-
-    //DEBUG
-    public Mat test () {
-        //threshold( src_gray, dst, threshold_value, MAX_8BIT_VALUE, threshold_type );
-        applyGaussianBlur( 7 );
-        binarize();
-        Canny( dst, dst, lowThreshold, lowThreshold * ratio, 3, true );
-
-        //imshow( window_name, dst );
-        imwrite( "output.png", dst );
-        return dst;
-    }
+    // end of TODO/TMP/FIXME
 
     @Override
     public String toString () {

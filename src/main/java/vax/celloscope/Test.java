@@ -1,6 +1,9 @@
 package vax.celloscope;
 
+import org.opencv.core.Mat;
 import org.opencv.core.Rect;
+import static org.opencv.highgui.Highgui.imwrite;
+import static org.opencv.imgproc.Imgproc.Canny;
 import static vax.celloscope.Main.*;
 import vax.opencv.OpenCvUtils;
 import vax.util.Vector2i;
@@ -61,4 +64,14 @@ public class Test {
         scaleMatchXY( dist, 8.0, ImageCv.Interpolation.Lanczos4, r1, r2, offsetMaxBase, offsets );
     }
 
+    //DEBUG
+    public void testCanny ( ImageCv imageCv ) {
+        //threshold( src_gray, dst, threshold_value, MAX_8BIT_VALUE, threshold_type );
+        imageCv.applyGaussianBlur( 7 );
+        imageCv.binarize();
+        Canny( imageCv.getSrc(), imageCv.getDst(), ImageCv.lowThreshold, ImageCv.lowThreshold * ImageCv.ratio, 3, true );
+
+        //imshow( window_name, dst );
+        imwrite( "output.png", imageCv.getDst() );
+    }
 }

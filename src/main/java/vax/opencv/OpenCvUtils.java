@@ -4,6 +4,7 @@ package vax.opencv;
 import vax.util.Vector2i;
 import org.opencv.core.Mat;
 import org.opencv.core.Rect;
+import org.opencv.core.Scalar;
 import vax.celloscope.ImageCv;
 
 /**
@@ -11,6 +12,11 @@ import vax.celloscope.ImageCv;
  @author toor
  */
 public class OpenCvUtils {
+
+    public static final Scalar //
+            ZERO = new Scalar( 0 ),
+            ONE = new Scalar( 1 );
+
     /**
      also sets both x and y to 0
 
