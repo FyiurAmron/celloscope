@@ -8,8 +8,10 @@ import javax.swing.event.ChangeEvent;
 import org.opencv.core.*;
 
 import static org.opencv.core.CvType.*;
-import org.opencv.highgui.Highgui;
+import org.opencv.imgproc.CLAHE;
 import org.opencv.imgproc.Imgproc;
+import static org.opencv.imgproc.Imgproc.CV_HOUGH_GRADIENT;
+import static org.opencv.imgproc.Imgproc.MORPH_ELLIPSE;
 import vax.celloscope.ImageCv.Interpolation;
 import vax.opencv.MatBufferedImage;
 import vax.opencv.OpenCvUtils;
@@ -46,7 +48,8 @@ public class Main {
 
     public static void main ( String[] args ) {
         // load OpenCV v2.4.11 DLL first
-        System.load( Paths.get( "opencv_java2411.dll" ).toAbsolutePath().normalize().toString() );
+        //System.load( Paths.get( "opencv_java2411.dll" ).toAbsolutePath().normalize().toString() );
+        System.load( Paths.get( "opencv_java310.dll" ).toAbsolutePath().normalize().toString() );
 
         processAllImages();
         //initUI();
@@ -77,7 +80,7 @@ public class Main {
         imageCv1cp.rect( r1 );
         imageCv2cp.rect( r2 );
 
-        imageCv1cp.absdiff( imageCv2cp.getSrc() );
+        imageCv1cp.absdiff( imageCv2cp );
         //imageCv1cp.saveToFile( "result1.png" );
         saveToFile( imageCv1cp, "_01" );
 
@@ -96,6 +99,7 @@ public class Main {
         saveToFile( imageCv1cp, "_05" );
         imageCv1cp.normalize();
         saveToFile( imageCv1cp, "_06" );
+        ImageCv m06 = imageCv1cp.copy();
         imageCv1cp.binarize();
         saveToFile( imageCv1cp, "_07" );
         imageCv1cp.applyMedianBlur( 4 );
@@ -155,21 +159,21 @@ public class Main {
         imageCv1cp.convertColor( ImageCv.ColorConversion.GRAY2BGR );
         src = imageCv1cp.getSrc();
         int thin = 1, thick = 3, filled = -1, dotSize = 3;
-        Core.circle( src, center1, dotSize, Color3.Red.getScalar(), thick );
-        Core.circle( src, center1, (int) radius1, Color3.Yellow.getScalar(), thin );
+        Imgproc.circle( src, center1, dotSize, Color3.Red.getScalar(), thick );
+        Imgproc.circle( src, center1, (int) radius1, Color3.Yellow.getScalar(), thin );
 
         double radius2 = 0.9 * radius1;
         logger.log( "weighted center: (" + avgD[0] + "," + avgD[1] + ") smaller radius: " + radius2 );
-        Core.circle( src, center2, dotSize, Color3.Blue.getScalar(), thick );
-        Core.circle( src, center2, (int) radius2, Color3.Green.getScalar(), thin );
+        Imgproc.circle( src, center2, dotSize, Color3.Blue.getScalar(), thick );
+        Imgproc.circle( src, center2, (int) radius2, Color3.Green.getScalar(), thin );
 
         double kEnclosing = 0.25, kWeighted = 1 - kEnclosing;
         center3.x = kEnclosing * center1.x + kWeighted * center2.x;
         center3.y = kEnclosing * center1.y + kWeighted * center2.y;
         double radius3 = radius2 * 0.9;
         logger.log( "avg center: (" + avgD[0] + "," + avgD[1] + ") smallest radius: " + radius3 );
-        Core.circle( src, center3, dotSize, Color3.Cyan.getScalar(), thick );
-        Core.circle( src, center3, (int) radius3, Color3.Magenta.getScalar(), thin );
+        Imgproc.circle( src, center3, dotSize, Color3.Cyan.getScalar(), thick );
+        Imgproc.circle( src, center3, (int) radius3, Color3.Magenta.getScalar(), thin );
         saveToFile( imageCv1cp, "_08" );
         double radius4 = radius1 * 1.33;
 
@@ -180,10 +184,10 @@ public class Main {
         //imageCv1cp.resize( 0.5 );
         imageCv1cp.convertColor( ImageCv.ColorConversion.GRAY2BGR );
         src = imageCv1cp.getSrc();
-        Core.circle( src, center1, (int) radius1, Color3.Yellow.getScalar(), thin );
-        Core.circle( src, center2, (int) radius2, Color3.Green.getScalar(), thin );
-        Core.circle( src, center3, (int) radius3, Color3.Magenta.getScalar(), thin );
-        Core.circle( src, center3, (int) radius4, Color3.Red.getScalar(), thick );
+        Imgproc.circle( src, center1, (int) radius1, Color3.Yellow.getScalar(), thin );
+        Imgproc.circle( src, center2, (int) radius2, Color3.Green.getScalar(), thin );
+        Imgproc.circle( src, center3, (int) radius3, Color3.Magenta.getScalar(), thin );
+        Imgproc.circle( src, center3, (int) radius4, Color3.Red.getScalar(), thick );
         saveToFile( imageCv1cp, "_09" );
 
         imageCv1cp = imageCv1.copy();
@@ -198,10 +202,10 @@ public class Main {
         center3.y += r1.y;
         imageCv1cp.convertColor( ImageCv.ColorConversion.GRAY2BGR );
         src = imageCv1cp.getSrc();
-        Core.circle( src, center1, (int) radius1, Color3.Yellow.getScalar(), thin );
-        Core.circle( src, center2, (int) radius2, Color3.Green.getScalar(), thin );
-        Core.circle( src, center3, (int) radius3, Color3.Magenta.getScalar(), thin );
-        Core.circle( src, center3, (int) radius4, Color3.Red.getScalar(), thick );
+        Imgproc.circle( src, center1, (int) radius1, Color3.Yellow.getScalar(), thin );
+        Imgproc.circle( src, center2, (int) radius2, Color3.Green.getScalar(), thin );
+        Imgproc.circle( src, center3, (int) radius3, Color3.Magenta.getScalar(), thin );
+        Imgproc.circle( src, center3, (int) radius4, Color3.Red.getScalar(), thick );
         saveToFile( imageCv1cp, "_10" );
         ImageCv //
                 roi = new ImageCv( new Mat( src.rows(), src.cols(), CV_8UC1, OpenCvUtils.ZERO ) ),
@@ -211,7 +215,7 @@ public class Main {
         masked.setAutoswap( true );
         roi.setAutoswap( true );
         bkgd.setAutoswap( true );
-        Core.circle( roi.getSrc(), center3, (int) ( radius1 * 1.0 ), Color3.White.getScalar(), filled );
+        Imgproc.circle( roi.getSrc(), center3, (int) ( radius1 * 1.0 ), Color3.White.getScalar(), filled );
         roi.applyGaussianBlur( 120 );
         saveToFile( roi, "_10roi" );
         //saveToFile( cropped, "_10cropped" );
@@ -227,6 +231,11 @@ public class Main {
         saveToFile( masked, "_11bkgd" );
         // 100% OK till this point
 /*
+        CLAHE clahe = Imgproc.createCLAHE( //40, new Size( 4, 4 )// );
+        clahe.apply( masked.getSrc(), masked.getDst() );
+        masked.swap();
+        */
+        /*
          masked.getSrc().convertTo( masked.getDst(), CV_32SC1 );
          masked.swap();
          Core.subtract( masked.getSrc(), mean, masked.getDst(), new Mat(), CV_32SC1 );
@@ -236,18 +245,94 @@ public class Main {
         //masked.applyMedianBlur( 5 );
         //Core.absdiff( masked.getSrc(), mean, masked.getDst() );
         //masked.swap();
+        ImageCv can, morpho;
+        double lowThreshold = 64, k1 = 1, k2 = 2, k3 = 3, k4 = 4;
+        Size //
+                ksize1 = new Size( k1, k1 ),
+                ksize2 = new Size( k2, k2 ),
+                ksize3 = new Size( k3, k3 ),
+                ksize4 = new Size( k4, k4 );
+        Mat kernel1 = Imgproc.getStructuringElement( MORPH_ELLIPSE, ksize1 );
+        Mat kernel2 = Imgproc.getStructuringElement( MORPH_ELLIPSE, ksize2 );
+        Mat kernel3 = Imgproc.getStructuringElement( MORPH_ELLIPSE, ksize3 );
+        Mat kernel4 = Imgproc.getStructuringElement( MORPH_ELLIPSE, ksize4 );
+        //Mat kernel3 = new Mat( 1, 1, CV_8UC1, new Scalar( 1 ) );
+        //new Mat( 3, 3, CV_8UC1, OpenCvUtils.ONE );
+        ImageCv cpy = masked.copy(), cantest = masked.copy();
+        masked.applyMedianBlur( 5 );
+        masked.applyMedianBlur( 3 );
+        masked.applyMedianBlur( 2 );
+        masked.applyMedianBlur( 2 );
+        //masked.applyBilateralFilter( 9, 200);
+        //masked.applyMedianBlur( 2 );
+        //masked.applyMedianBlur( 2 );
+        //masked.applyMedianBlur( 2 );
+        //masked.applyMedianBlur( 2 );
+        //masked.applyMedianBlur( 2 );
+        //masked.applyMedianBlur( 2 );
+        cpy.sub( masked );
+        saveToFile( cpy, "_11cpysub" );
+        cpy.normalize();
+        cpy.applyGaussianBlur( 3 );
+        cpy.edgeCanny( 20, 60 );
+        saveToFile( cpy, "_11cpysubcanny" );
+        saveToFile( masked, "_11masked" );
+        masked.edgeCanny( 15, 45, 3, true );
+        saveToFile( masked, "_11maskedcan" );
+        //masked.applyGaussianBlur( 20 );
+        Mat circles = new Mat();
+        Imgproc.HoughCircles( masked.getSrc(), circles, CV_HOUGH_GRADIENT,
+                1, 10, 15, 45, (int) ( 0.2 * radius1 ), (int) radius1 );
+        Point hcenter = new Point();
+        double hradius = 0;
+        for( int x = 0; x < circles.cols(); x++ ) {
+            double[] vec = circles.get( 0, x );
+            hcenter.x = vec[0];
+            hcenter.y = vec[1];
+            hradius = vec[2];
+            Imgproc.circle( masked.getSrc(), hcenter, (int) hradius, Color3.White.getScalar(), 1 );
+        }
+        saveToFile( masked, "_11maskedcircles" );
+        Imgproc.HoughCircles( m06.getSrc(), circles, CV_HOUGH_GRADIENT,
+                1, (int) ( 0.25 * radius1 ), 15, 45, (int) ( 0.5 * radius1 ), (int) ( radius1 ) );
+        for( int x = 0; x < circles.cols(); x++ ) {
+            double[] vec = circles.get( 0, x );
+            hcenter.x = vec[0];
+            hcenter.y = vec[1];
+            hradius = vec[2];
+            Imgproc.circle( m06.getSrc(), hcenter, (int) hradius, Color3.White.getScalar(), 1 );
+        }
+        saveToFile( m06, "_06circles" );
+
+        can = masked.copy();
+        can.edgeCanny( 15, 45, 3, true );
+        saveToFile( can, "_11canpre1" );
+        /*
+         can = masked.copy();
+         can.edgeCanny( 150, 450, 5, true );
+         saveToFile( can, "_11canpre2" );
+         can = masked.copy();
+         can.edgeCanny( 2200, 6600, 7, true );
+         saveToFile( can, "_11canpre3" );
+         */
+        morpho = can.copy();
+        morpho.dilate( kernel3 );
+        morpho.erode( kernel4 );
+        //morpho.dilate( kernel3 );
+        //can.bitwiseAnd( morpho );
+        saveToFile( morpho, "_11morpho" );
+        saveToFile( can, "_11can" );
         saveToFile( masked, "_11prep0" );
         /*
          masked.getSrc().convertTo( masked.getDst(), CV_8UC1 );
          masked.swap();
          */
         //masked.swap();
-        Imgproc.bilateralFilter( masked.getSrc(), masked.getDst(), 5, 200, 200 );
-        masked.swap();
+        masked.applyBilateralFilter( 5, 200 );
         //masked.threshold( 5, ImageCv.ThresholdType.ToZero );
         masked.normalize();
         saveToFile( masked, "_11prep1" );
-        Imgproc.bilateralFilter( masked.getSrc(), masked.getDst(), 5, 100, 100 );
+        masked.applyBilateralFilter( 5, 100 );
         //masked.threshold( 28, ImageCv.ThresholdType.ToZero );
         //masked.swap();
         masked.applyMedianBlur( 2 );
@@ -268,12 +353,23 @@ public class Main {
          masked.normalize();
          saveToFile( masked, "_11prnorm2" );
          */
-        float lowThreshold = 64f, ratio = 3f;
-        //Imgproc.Canny( masked.getSrc(), masked.getDst(), lowThreshold, lowThreshold * ratio,7, true );
-        Imgproc.Canny( masked.getSrc(), masked.getDst(), lowThreshold, lowThreshold * ratio );
-        masked.swap();
-        saveToFile( masked, "_12" );
 
+        can = cantest.copy();
+        can.edgeCanny( lowThreshold );
+        saveToFile( can, "_12a" );
+
+        can = cantest.copy();
+        can.edgeCanny( lowThreshold * 1.25 );
+        saveToFile( can, "_12b" );
+
+        can = cantest.copy();
+        can.edgeCanny( lowThreshold * 0.66 );
+        saveToFile( can, "_12c" );
+        /*
+         can.dilate( kernel );
+         can.erode( kernel );
+         */
+        saveToFile( can, "_13" );
     }
 
     public static void processImage (/* Rect r1, Rect r2, Vector2i offsets */) {
@@ -286,8 +382,8 @@ public class Main {
         Rect r1 = new Rect(), r2 = new Rect();
         Vector2i offsets = new Vector2i();
 
-        counter = 50;
-        while( counter < 80 ) {
+        counter = 1;
+        while( counter < 279 ) {
             imageCv1 = imageCv2;
             imageCv2 = loadNextImage(); // new ImageCv( "img01.png" );
             prescanImage( r1, r2, offsets );

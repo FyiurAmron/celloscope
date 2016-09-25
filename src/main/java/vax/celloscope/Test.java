@@ -1,8 +1,7 @@
 package vax.celloscope;
 
-import org.opencv.core.Mat;
 import org.opencv.core.Rect;
-import static org.opencv.highgui.Highgui.imwrite;
+import org.opencv.imgcodecs.Imgcodecs;
 import static org.opencv.imgproc.Imgproc.Canny;
 import static vax.celloscope.Main.*;
 import vax.opencv.OpenCvUtils;
@@ -23,7 +22,7 @@ public class Test {
         imageCv1cp.rect( r1 );
         imageCv2cp.rect( r2 );
 
-        imageCv1cp.absdiff( imageCv2cp.getSrc() );
+        imageCv1cp.absdiff( imageCv2cp );
         imageCv1cp.saveToFile( "result" + scale + "_" + interpolation + ".png" );
 
         logger.log( "Interpolation: " + interpolation + "\n"
@@ -43,7 +42,7 @@ public class Test {
         double dist = OpenCvUtils.matchXY( Main.imageCv1, Main.imageCv2, r1, r2, offsetMaxBase, offsets );
         imageCv1cp.rect( r1 );
         imageCv2cp.rect( r2 );
-        imageCv1cp.absdiff( imageCv2cp.getSrc() );
+        imageCv1cp.absdiff( imageCv2cp );
         imageCv1cp.saveToFile( "result1.0.png" );
         logger.log( "REFERENCE SIZE" + "\n"
                 + "dist min (scale 1.0): " + Math.round( dist )
@@ -72,6 +71,6 @@ public class Test {
         Canny( imageCv.getSrc(), imageCv.getDst(), ImageCv.lowThreshold, ImageCv.lowThreshold * ImageCv.ratio, 3, true );
 
         //imshow( window_name, dst );
-        imwrite( "output.png", imageCv.getDst() );
+        Imgcodecs.imwrite( "output.png", imageCv.getDst() );
     }
 }

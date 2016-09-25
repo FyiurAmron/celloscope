@@ -1,8 +1,8 @@
 package vax.celloscope;
 
 import org.opencv.core.*;
+import static org.opencv.imgcodecs.Imgcodecs.*;
 import static org.opencv.imgproc.Imgproc.*;
-import static org.opencv.highgui.Highgui.*;
 import org.opencv.imgproc.Imgproc;
 
 /**
@@ -11,6 +11,7 @@ import org.opencv.imgproc.Imgproc;
  */
 public class ImageCv {
     final static public int MAX_8BIT_VALUE = 255;
+    final static public double DEFAULT_CANNY_RATIO = 3.0;
 
     private Mat src;
     private Mat dst = new Mat();
@@ -127,16 +128,6 @@ public class ImageCv {
         return new ImageCv( this, deepCopy );
     }
 
-    public ImageCv sub ( Mat m2 ) {
-        Core.subtract( src, m2, dst );
-        return autoswap();
-    }
-
-    public ImageCv absdiff ( Mat m2 ) {
-        Core.absdiff( src, m2, dst );
-        return autoswap();
-    }
-
     public double norm () {
         return Core.norm( src );
     }
@@ -234,9 +225,34 @@ public class ImageCv {
         return autoswap();
     }
 
+    public ImageCv sub ( ImageCv imageCv ) {
+        Core.subtract( src, imageCv.src, dst );
+        return autoswap();
+    }
+
+    public ImageCv absdiff ( ImageCv imageCv ) {
+        Core.absdiff( src, imageCv.src, dst );
+        return autoswap();
+    }
+
     public ImageCv addToElements ( double value ) {
         Core.add( src, toScalar( value ), dst );
         return this;
+    }
+
+    public ImageCv bitwiseAnd ( ImageCv imageCv ) {
+        Core.bitwise_and( src, imageCv.src, dst );
+        return autoswap();
+    }
+
+    public ImageCv bitwiseOr ( ImageCv imageCv ) {
+        Core.bitwise_or( src, imageCv.src, dst );
+        return autoswap();
+    }
+
+    public ImageCv bitwiseXor ( ImageCv imageCv ) {
+        Core.bitwise_xor( src, imageCv.src, dst );
+        return autoswap();
     }
 
     public ImageCv invertColors () {
@@ -246,6 +262,46 @@ public class ImageCv {
 
     public ImageCv normalize () {
         Core.normalize( src, dst, 0, MAX_8BIT_VALUE, Core.NORM_MINMAX );
+        return autoswap();
+    }
+
+    public ImageCv edgeCanny ( double lowThreshold ) {
+        return edgeCanny( lowThreshold, DEFAULT_CANNY_RATIO * lowThreshold );
+    }
+
+    public ImageCv edgeCanny ( double lowThreshold, double highThreshold ) {
+        return edgeCanny( lowThreshold, highThreshold, 3, false );
+    }
+
+    /**
+
+     @param lowThreshold
+     @param highThreshold
+     @param sobelApertureSize 3, 5 or 7
+     @param l2gradient should a more precise metric be used?
+     @return
+     */
+    public ImageCv edgeCanny ( double lowThreshold, double highThreshold, int sobelApertureSize, boolean l2gradient ) {
+        Canny( src, dst, lowThreshold, highThreshold, sobelApertureSize, l2gradient );
+        return autoswap();
+    }
+
+    public ImageCv dilate ( Mat kernel ) {
+        Imgproc.dilate( src, dst, kernel );
+        return autoswap();
+    }
+
+    public ImageCv erode ( Mat kernel ) {
+        Imgproc.erode( src, dst, kernel );
+        return autoswap();
+    }
+
+    public ImageCv applyBilateralFilter ( int d, double sigma ) {
+        return applyBilateralFilter( d, sigma, sigma );
+    }
+
+    public ImageCv applyBilateralFilter ( int d, double sigmaColor, double sigmaSpace ) {
+        Imgproc.bilateralFilter( src, dst, d, sigmaColor, sigmaSpace );
         return autoswap();
     }
 

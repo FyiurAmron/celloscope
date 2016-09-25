@@ -50,7 +50,7 @@ public class OpenCvUtils {
         setSize( outR2, rows, cols );
         ImageCv img1 = imageCv1.copy();
         ImageCv img2 = imageCv2.copy();
-        img1.absdiff( img2.getSrc() );
+        img1.absdiff( img2 );
         double distLast1 = img1.norm(), distLast2 = distLast1, distCur;
         img1.swap();
 
@@ -63,7 +63,7 @@ public class OpenCvUtils {
             outR2.height--;
             img1.rect( outR1 );
             img2.rect( outR2 );
-            img1.absdiff( img2.getSrc() );
+            img1.absdiff( img2 );
             distCur = img1.norm();
             img1.swap();
             if ( distCur >= distLast1 ) {
@@ -84,7 +84,7 @@ public class OpenCvUtils {
             outR2.height--;
             img1.rect( outR1 );
             img2.rect( outR2 );
-            img1.absdiff( img2.getSrc() );
+            img1.absdiff( img2 );
             distCur = img1.norm();
             img1.swap();
             if ( distCur >= distLast2 ) {
@@ -128,7 +128,7 @@ public class OpenCvUtils {
             outR2.width--;
             img1.rect( outR1 );
             img2.rect( outR2 );
-            img1.absdiff( img2.getSrc() );
+            img1.absdiff( img2 );
             distCur = img1.norm();
             img1.swap();
             if ( distCur >= distLast1 ) {
@@ -150,7 +150,7 @@ public class OpenCvUtils {
             outR2.width--;
             img1.rect( outR1 );
             img2.rect( outR2 );
-            img1.absdiff( img2.getSrc() );
+            img1.absdiff( img2 );
             distCur = img1.norm();
             img1.swap();
             if ( distCur >= distLast2 ) {
@@ -207,7 +207,7 @@ public class OpenCvUtils {
         setSize( outR2, rows, cols );
         ImageCv img1 = imageCv1.copy();
         ImageCv img2 = imageCv2.copy();
-        img1.absdiff( img2.getSrc() );
+        img1.absdiff( img2 );
         double distLast1 = img1.norm(), distLast2 = distLast1, distCur;
 
         int i;
@@ -219,7 +219,7 @@ public class OpenCvUtils {
             img2 = imageCv2.copy();
             img1.rect( outR1 );
             img2.rect( outR2 );
-            img1.absdiff( img2.getSrc() );
+            img1.absdiff( img2 );
             distCur = img1.norm();
             if ( distCur >= distLast1 ) {
                 break;
@@ -238,7 +238,7 @@ public class OpenCvUtils {
             img2 = imageCv2.copy();
             img1.rect( outR1 );
             img2.rect( outR2 );
-            img1.absdiff( img2.getSrc() );
+            img1.absdiff( img2 );
             distCur = img1.norm();
             if ( distCur >= distLast2 ) {
                 break;
@@ -274,7 +274,7 @@ public class OpenCvUtils {
             img2 = imageCv2.copy();
             img1.rect( outR1 );
             img2.rect( outR2 );
-            img1.absdiff( img2.getSrc() );
+            img1.absdiff( img2 );
             distCur = img1.norm();
             if ( distCur >= distLast1 ) {
                 break;
@@ -293,7 +293,7 @@ public class OpenCvUtils {
             img2 = imageCv2.copy();
             img1.rect( outR1 );
             img2.rect( outR2 );
-            img1.absdiff( img2.getSrc() );
+            img1.absdiff( img2 );
             distCur = img1.norm();
             if ( distCur >= distLast2 ) {
                 break;
