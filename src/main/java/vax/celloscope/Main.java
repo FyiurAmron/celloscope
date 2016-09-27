@@ -1,14 +1,15 @@
 package vax.celloscope;
 
 import java.awt.event.ActionEvent;
-import java.nio.file.Paths;
+import java.io.*;
+import java.net.URISyntaxException;
+import java.nio.file.*;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 
 import org.opencv.core.*;
 
 import static org.opencv.core.CvType.*;
-import org.opencv.imgproc.CLAHE;
 import org.opencv.imgproc.Imgproc;
 import static org.opencv.imgproc.Imgproc.CV_HOUGH_GRADIENT;
 import static org.opencv.imgproc.Imgproc.MORPH_ELLIPSE;
@@ -46,11 +47,23 @@ public class Main {
         return imageCv.rowRange( 1, -1 ).applyMedianBlur( 1 ).applyMedianBlur( 1 ); // initial filtering
     }
 
-    public static void main ( String[] args ) {
-        // load OpenCV v2.4.11 DLL first
-        //System.load( Paths.get( "opencv_java2411.dll" ).toAbsolutePath().normalize().toString() );
-        System.load( Paths.get( "opencv_java310.dll" ).toAbsolutePath().normalize().toString() );
+    public static InputStream getResourceStream ( Class<?> resourceClass, String resourceName ) {
+        return resourceClass.getResourceAsStream(
+                "/" + resourceClass.getPackage().getName().replace( '.', '/' ) + "/" + resourceName );
+    }
 
+    public static void loadLibrary ( Class<?> resourceClass, String nativeLibraryName ) throws IOException {
+        String fullName = System.mapLibraryName( nativeLibraryName );
+        Path libPath = Paths.get( fullName );
+        if ( !libPath.toFile().exists() ) {
+            Files.copy( getResourceStream( resourceClass, fullName ), libPath ); // extracts DLL to running dir
+        }
+        System.loadLibrary( nativeLibraryName );
+    }
+
+    public static void main ( String[] args ) throws URISyntaxException, IOException {
+        // load OpenCV DLL first
+        loadLibrary( org.opencv.NativeDll.class, "opencv_java310" );
         processAllImages();
         //initUI();
     }
@@ -68,27 +81,15 @@ public class Main {
         imageCv1cp.resize( 2.0, Interpolation.Linear );
         imageCv2cp.resize( 2.0, Interpolation.Linear );
         double dist = OpenCvUtils.matchXY( imageCv1cp, imageCv2cp, r1, r2, 10 * 2, offsets );
-        /*
-         int offset = -1;
-         r1.y += offset;
-         r1.height -= offset;
-         r2.height -= offset;
-         */
- /* r2.y = r1.y;
-         r1.y = 0;
-         */
+
         imageCv1cp.rect( r1 );
         imageCv2cp.rect( r2 );
 
         imageCv1cp.absdiff( imageCv2cp );
-        //imageCv1cp.saveToFile( "result1.png" );
         saveToFile( imageCv1cp, "_01" );
 
         imageCv1cp.resize( 0.5, Interpolation.Linear );
         saveToFile( imageCv1cp, "_01b" );
-        //Core.MinMaxLocResult mmlResult = Core.minMaxLoc( imageCv1cp.getSrc() );
-        //logger.log( "max value (1): " + mmlResult.maxVal );
-        //imageCv1cp.multiply( 255 / mmlResult.maxVal );
         imageCv1cp.normalize();
         saveToFile( imageCv1cp, "_02" );
         imageCv1cp.threshold( 32, ImageCv.ThresholdType.ToZero );
@@ -178,10 +179,8 @@ public class Main {
         double radius4 = radius1 * 1.33;
 
         imageCv1cp = imageCv1.copy();
-        //imageCv1cp.resize( 2.0 );
         imageCv1cp.rect( r1 );
         Scalar mean = imageCv1cp.mean();
-        //imageCv1cp.resize( 0.5 );
         imageCv1cp.convertColor( ImageCv.ColorConversion.GRAY2BGR );
         src = imageCv1cp.getSrc();
         Imgproc.circle( src, center1, (int) radius1, Color3.Yellow.getScalar(), thin );
@@ -191,9 +190,6 @@ public class Main {
         saveToFile( imageCv1cp, "_09" );
 
         imageCv1cp = imageCv1.copy();
-        //imageCv1cp.resize( 2.0 );
-        //imageCv1cp.rect( r1 );
-        //imageCv1cp.resize( 0.5 );
         center1.x += r1.x;
         center2.x += r1.x;
         center3.x += r1.x;
@@ -230,21 +226,7 @@ public class Main {
         masked.add( bkgd );
         saveToFile( masked, "_11bkgd" );
         // 100% OK till this point
-/*
-        CLAHE clahe = Imgproc.createCLAHE( //40, new Size( 4, 4 )// );
-        clahe.apply( masked.getSrc(), masked.getDst() );
-        masked.swap();
-        */
-        /*
-         masked.getSrc().convertTo( masked.getDst(), CV_32SC1 );
-         masked.swap();
-         Core.subtract( masked.getSrc(), mean, masked.getDst(), new Mat(), CV_32SC1 );
-         masked.swap();
-         */
-//masked.applyGaussianBlur( 5 );
-        //masked.applyMedianBlur( 5 );
-        //Core.absdiff( masked.getSrc(), mean, masked.getDst() );
-        //masked.swap();
+
         ImageCv can, morpho;
         double lowThreshold = 64, k1 = 1, k2 = 2, k3 = 3, k4 = 4;
         Size //
@@ -307,14 +289,7 @@ public class Main {
         can = masked.copy();
         can.edgeCanny( 15, 45, 3, true );
         saveToFile( can, "_11canpre1" );
-        /*
-         can = masked.copy();
-         can.edgeCanny( 150, 450, 5, true );
-         saveToFile( can, "_11canpre2" );
-         can = masked.copy();
-         can.edgeCanny( 2200, 6600, 7, true );
-         saveToFile( can, "_11canpre3" );
-         */
+
         morpho = can.copy();
         morpho.dilate( kernel3 );
         morpho.erode( kernel4 );
@@ -337,22 +312,8 @@ public class Main {
         //masked.swap();
         masked.applyMedianBlur( 2 );
         masked.applyMedianBlur( 2 );
-        //masked.applyMedianBlur( 5 );
-        //masked.applyMedianBlur( 5 );
-        //masked.threshold( 32, ImageCv.ThresholdType.ToZero );
-        //masked.applyGaussianBlur( 3 );
-        //masked.applyMedianBlur( 3 );
-        saveToFile( masked, "_11prep2" );
-        /*
 
-         saveToFile( masked, "_11prnorm" );
-         masked.applyGaussianBlur( 15 );
-         saveToFile( masked, "_11prnormask" );
-         //masked.binarize();
-         //saveToFile( masked, "_11prep2" );
-         masked.normalize();
-         saveToFile( masked, "_11prnorm2" );
-         */
+        saveToFile( masked, "_11prep2" );
 
         can = cantest.copy();
         can.edgeCanny( lowThreshold );
@@ -383,7 +344,7 @@ public class Main {
         Vector2i offsets = new Vector2i();
 
         counter = 1;
-        while( counter < 279 ) {
+        while( counter < 2/* 79 */ ) {
             imageCv1 = imageCv2;
             imageCv2 = loadNextImage(); // new ImageCv( "img01.png" );
             prescanImage( r1, r2, offsets );

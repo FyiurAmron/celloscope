@@ -16,16 +16,14 @@ if (!hasProperty('mainClass')) {
 
 repositories {
     mavenCentral()
-    // You may define additional repositories, or even remove "mavenCentral()".
-    // Read more about repositories here:
-    //   http://www.gradle.org/docs/current/userguide/dependency_management.html#sec:repositories
+    maven {
+        url  "https://dl.bintray.com/ihmcrobotics/maven-vendor"
+    }
 }
 
 dependencies {
-    // TODO: Add dependencies here ...
-    // You can read more about how to add dependency here:
-    //   http://www.gradle.org/docs/current/userguide/dependency_management.html#sec:how_to_declare_your_dependencies
-    //testCompile group: 'junit', name: 'junit', version: '4.10'
-    compile 'org.openpnp:opencv:2.4.11-2'
+    //compile 'org.openpnp:opencv:2.4.11-2'
     //compile 'us.ihmc.thirdparty.org.opencv:opencv:3.1.0'
+    compile 'us.ihmc.thirdparty.org.opencv:opencv:3.1.0-160510'
+    compile 'us.ihmc.thirdparty.org.opencv:opencv-java-natives-win64:3.1.0-160510'
 }
