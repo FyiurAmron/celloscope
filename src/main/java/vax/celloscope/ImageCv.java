@@ -21,6 +21,9 @@ public class ImageCv {
     private boolean autoswap = false;
     private Interpolation defaultInterpolation = Interpolation.Cubic;
 
+    //
+    // instance c-tors
+    //
     /**
      @param src initially not copied, referenced only
      */
@@ -60,14 +63,27 @@ public class ImageCv {
         this( imread( srcName, imageReadType.toInt() ) );
     }
 
+    //
+    // general/util methods
+    //
     public ImageCv convertColor ( ColorConversion colorConversion ) {
         cvtColor( src, dst, colorConversion.toInt() );
         return autoswap();
     }
 
-    public ImageCv saveToFile ( String dstName ) {
-        imwrite( dstName, src );
+    public ImageCv saveToFile ( String filename ) {
+        imwrite( filename, src );
         return this;
+    }
+
+    /**
+     convenience method, functionally equal to saveToFile()
+
+     @param filename
+     @return
+     */
+    public ImageCv writeTo ( String filename ) {
+        return saveToFile( filename );
     }
 
     /**
@@ -126,6 +142,55 @@ public class ImageCv {
 
     public ImageCv copy ( boolean deepCopy ) {
         return new ImageCv( this, deepCopy );
+    }
+
+    //
+    // general purpose methods
+    //
+    public ImageCv rowShift ( int offset ) {
+        return rowShift( offset, true );
+    }
+
+    public ImageCv rowShift ( int offset, boolean carry ) {
+        if ( offset == 0 ) {
+            return this;
+        }
+        int rows = src.rows();
+        if ( offset > 0 ) {
+            int div = rows - offset;
+            dst = carry ? src.rowRange( div, rows ) : Mat.zeros( offset, src.cols(), src.type() );
+            dst.push_back( src.rowRange( 0, div ) );
+        } else { // offset < 0
+            offset = -offset;
+            dst = src.rowRange( offset, rows );
+            dst.push_back( carry ? src.rowRange( 0, offset ) : Mat.zeros( offset, src.cols(), src.type() ) );
+        }
+        return autoswap();
+    }
+
+    public ImageCv colShift ( int offset ) {
+        return colShift( offset, true );
+    }
+
+    public ImageCv colShift ( int offset, boolean carry ) {
+        if ( offset == 0 ) {
+            return this;
+        }
+        int cols = src.cols();
+        Mat t;
+        if ( offset > 0 ) {
+            int div = cols - offset;
+            dst = carry ? src.colRange( div, cols ) : Mat.zeros( src.rows(), offset, src.type() );
+            t = dst.t();
+            t.push_back( src.colRange( 0, div ).t() );
+        } else { // offset < 0
+            offset = -offset;
+            dst = src.colRange( offset, cols );
+            t = dst.t();
+            t.push_back( ( carry ? src.colRange( 0, offset ) : Mat.zeros( src.rows(), offset, src.type() ) ).t() );
+        }
+        dst = t.t();
+        return autoswap();
     }
 
     public double norm () {
